@@ -3,6 +3,10 @@ var sass = require('gulp-sass');
 var inject = require('gulp-inject');
 var wiredep = require('wiredep').stream;
 var del = require('del');
+var mainBowerFiles = require('main-bower-files');
+var filter = require('gulp-filter');
+var concat = require('gulp-concat');
+var csso = require('gulp-csso');
 
 gulp.task('clean', function(cb){
     del(['dist'], cb);
@@ -35,12 +39,20 @@ gulp.task('styles', function(){
         .pipe(inject(injectGlobalFiles, injectGlobalOptions))
         .pipe(inject(injectAppFiles, injectAppOptions))
         .pipe(sass())
+        .pipe(csso())
         .pipe(gulp.dest('dist/styles'));
 });
 
-gulp.task('default', ['clean', 'styles'], function(){
-    //FIXME it is not executing this callback
-    var injectFiles = gulp.src(['dist/styles/main.css']);
+gulp.task('vendors', function(){
+    return gulp.src(mainBowerFiles())
+        .pipe(filter('*.css'))
+        .pipe(concat('vendors.css'))
+        .pipe(csso())
+        .pipe(gulp.dest('dist/styles'));
+});
+
+gulp.task('default', ['clean', 'vendors', 'styles'], function(){
+    var injectFiles = gulp.src(['dist/styles/main.css', 'dist/styles/vendors.css']);
 
     var injectOptions = {
         addRootSlash: false,
